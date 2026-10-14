@@ -1,0 +1,47 @@
+name: OCI ARM Catcher
+
+on:
+  schedule:
+    # 每 10 分钟自动运行一次
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # 允许在网页端随时手动点一下运行
+
+jobs:
+  catch-arm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python & OCI CLI
+        run: |
+          pip install oci-cli
+
+      - name: Inject OCI Credentials from Secrets
+        run: |
+          mkdir -p ~/.oci
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
+          
+          # 自动写入 OCI CLI 配置文件
+          cat << EOF > ~/.oci/config
+          [DEFAULT]
+          user=${{ secrets.OCI_USER }}
+          fingerprint=${{ secrets.OCI_FINGERPRINT }}
+          tenancy=${{ secrets.OCI_TENANCY }}
+          region=ap-seoul-1
+          key_file=/home/runner/.oci/oci_api_key.pem
+          EOF
+
+      - name: Run OCI Instance Creation Script
+        run: |
+          # 尝试在首尔区域创建 ARM 实例（默认 4核 24GB，可根据你的需求调整 ocpus 和 memoryInGBs）
+          oci compute instance launch \
+            --compartment-id "${{ secrets.COMPARTMENT_ID }}" \
+            --availability-domain "Abcd:AP-SEOUL-1-AD-1" \
+            --shape "VM.Standard.A1.Flex" \
+            --shape-config '{"ocpus": 2, "memoryInGBs": 12}' \
+            --image-id "${{ secrets.IMAGE_ID }}" \
+            --subnet-id "${{ secrets.SUBNET_ID }}" \
+            --ssh-authorized-keys-file <(echo "${{ secrets.SSH_PUBLIC_KEY }}") \
+            --display-name "oci-arm-free" || true

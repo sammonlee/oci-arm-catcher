@@ -46,5 +46,4 @@ jobs:
             --assign-ipv6-ip true \
             --display-name "instance-20261014-2354" \
             --boot-volume-size-in-gbs 100 \
-            --boot-volume-vpus-per-gb 10 \
             --ssh-authorized-keys-file <(echo "${{ secrets.SSH_PUBLIC_KEY }}") || true

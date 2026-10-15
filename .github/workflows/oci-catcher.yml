@@ -23,7 +23,7 @@ jobs:
           echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
           chmod 600 ~/.oci/oci_api_key.pem
           
-          # 自动写入 OCI CLI 配置文件
+          # 写入 OCI CLI 配置文件
           cat << EOF > ~/.oci/config
           [DEFAULT]
           user=${{ secrets.OCI_USER }}
@@ -32,6 +32,9 @@ jobs:
           region=ap-seoul-1
           key_file=/home/runner/.oci/oci_api_key.pem
           EOF
+          
+          # 修复配置文件权限，消除权限警告
+          chmod 600 ~/.oci/config
 
       - name: Run OCI Instance Creation Script
         run: |
